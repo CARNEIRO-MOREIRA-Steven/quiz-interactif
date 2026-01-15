@@ -14,7 +14,7 @@ import {
   saveToLocalStorage,
   startTimer,
 } from "./utils.js";
-import {
+import {
   questions
 } from './questions.js'
 
@@ -25,6 +25,8 @@ let currentQuestionIndex = 0;
 let score = 0;
 let bestScore = loadFromLocalStorage("bestScore", 0);
 let timerId = null;
+let infiniteModeEnabled = false;
+let totalQuestionsAsked = 0;
 
 // DOM Elements
 const introScreen = getElement("#intro-screen");
@@ -33,6 +35,7 @@ const resultScreen = getElement("#result-screen");
 
 const bestScoreValue = getElement("#best-score-value");
 const bestScoreEnd = getElement("#best-score-end");
+const infiniteModeToggle = getElement("#infinite-mode-toggle");
 
 const questionText = getElement("#question-text");
 const answersDiv = getElement("#answers");
@@ -51,18 +54,26 @@ startBtn.addEventListener("click", startQuiz);
 nextBtn.addEventListener("click", nextQuestion);
 restartBtn.addEventListener("click", restartQuiz);
 
-setText(bestScoreValue, bestScore);
+const refreshBestScoreDisplays = () => {
+  setText(bestScoreValue, bestScore);
+  setText(bestScoreEnd, bestScore);
+};
+
+refreshBestScoreDisplays();
 
 function startQuiz() {
   hideElement(introScreen);
   showElement(questionScreen);
 
   questions.sort(() => Math.random() - 0.5);
-  
+
   currentQuestionIndex = 0;
   score = 0;
+  totalQuestionsAsked = 0;
 
-  setText(totalQuestionsSpan, questions.length);
+  infiniteModeEnabled = Boolean(infiniteModeToggle && infiniteModeToggle.checked);
+
+  setText(totalQuestionsSpan, infiniteModeEnabled ? "∞" : questions.length);
 
   showQuestion();
 }
@@ -72,7 +83,8 @@ function showQuestion() {
 
   const q = questions[currentQuestionIndex];
   setText(questionText, q.text);
-  setText(currentQuestionIndexSpan, currentQuestionIndex + 1);
+  totalQuestionsAsked += 1;
+  setText(currentQuestionIndexSpan, totalQuestionsAsked);
 
   answersDiv.innerHTML = "";
   q.answers.forEach((answer, index) => {
@@ -100,6 +112,11 @@ function selectAnswer(index, btn) {
   if (index === q.correct) {
     score++;
     btn.classList.add("correct");
+    if (score > bestScore) {
+      bestScore = score;
+      saveToLocalStorage("bestScore", bestScore);
+      refreshBestScoreDisplays();
+    }
   } else {
     btn.classList.add("wrong");
   }
@@ -113,9 +130,16 @@ function nextQuestion() {
   currentQuestionIndex++;
   if (currentQuestionIndex < questions.length) {
     showQuestion();
-  } else {
-    endQuiz();
+    return;
   }
+
+  if (infiniteModeEnabled) {
+    currentQuestionIndex = 0;
+    showQuestion();
+    return;
+  }
+
+  endQuiz();
 }
 
 function endQuiz() {
@@ -135,5 +159,5 @@ function restartQuiz() {
   hideElement(resultScreen);
   showElement(introScreen);
 
-  setText(bestScoreValue, bestScore);
+  refreshBestScoreDisplays();
 }
