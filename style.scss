@@ -1,3 +1,4 @@
+@charset "UTF-8";
 body {
   font-family: "Segoe UI", Arial, sans-serif;
   margin: 20px;
@@ -17,7 +18,7 @@ h1 {
 }
 
 button {
-  margin: 10px auto;
+  margin: 20px;
   padding: 10px 20px;
   cursor: pointer;
   background-color: #1976d2;
@@ -69,7 +70,6 @@ button:hover {
 }
 
 #timer-div {
-  margin-top: 10px;
   font-weight: bold;
   color: #d32f2f; /* rouge foncé */
 }
@@ -90,23 +90,27 @@ button:hover {
   margin-bottom: 10px;
 }
 
-#answers{
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 0px 20px;
+#answers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0px 20px;
 }
-#answers button{
-    width: 100%;
+
+#answers button {
+  width: 100%;
 }
-#question-screen{
-    padding: 0 20px 20px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 3px solid #e1e1e1;
+
+#question-screen, #intro-screen {
+  padding: 0 20px 0 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid #e1e1e1;
 }
-#progress{
+
+#progress, .best-score {
   padding: 20px 20px 15px 20px;
   width: max-content;
   text-align: center;
@@ -114,3 +118,14 @@ button:hover {
   background-color: #e1e1e1;
   border-radius: 0 0 25px 25px;
 }
+
+#timer-div{
+  padding: 20px 20px 15px 20px;
+  width: max-content;
+  text-align: center;
+  margin: 15px auto 0;
+  background-color: #e1e1e1;
+  border-radius: 25px 25px  0 0;
+}
+
+/*# sourceMappingURL=style.css.map */
