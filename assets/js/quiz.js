@@ -15,8 +15,8 @@ import {
   startTimer,
 } from "./utils.js";
 import {
-  questions
-} from './questions.js'
+  questions as allQuestions,
+} from "./questions.js";
 
 console.log("Quiz JS loaded...");
 
@@ -27,6 +27,7 @@ let bestScore = loadFromLocalStorage("bestScore", 0);
 let timerId = null;
 let infiniteModeEnabled = false;
 let totalQuestionsAsked = 0;
+let currentQuestions = [];
 
 // DOM Elements
 const introScreen = getElement("#intro-screen");
@@ -36,6 +37,7 @@ const resultScreen = getElement("#result-screen");
 const bestScoreValue = getElement("#best-score-value");
 const bestScoreEnd = getElement("#best-score-end");
 const infiniteModeToggle = getElement("#infinite-mode-toggle");
+const themeSelect = getElement("#theme-select");
 
 const questionText = getElement("#question-text");
 const answersDiv = getElement("#answers");
@@ -61,19 +63,59 @@ const refreshBestScoreDisplays = () => {
 
 refreshBestScoreDisplays();
 
+const populateThemeOptions = () => {
+  if (!themeSelect) {
+    return;
+  }
+
+  const themes = Array.from(
+    new Set(allQuestions.map((question) => question.theme))
+  ).sort();
+
+  themeSelect.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "Tous les thèmes";
+  themeSelect.appendChild(allOption);
+
+  themes.forEach((theme) => {
+    const option = document.createElement("option");
+    option.value = theme;
+    option.textContent = theme;
+    themeSelect.appendChild(option);
+  });
+};
+
+populateThemeOptions();
+
 function startQuiz() {
   hideElement(introScreen);
   showElement(questionScreen);
-
-  questions.sort(() => Math.random() - 0.5);
-
   currentQuestionIndex = 0;
   score = 0;
   totalQuestionsAsked = 0;
 
   infiniteModeEnabled = Boolean(infiniteModeToggle && infiniteModeToggle.checked);
 
-  setText(totalQuestionsSpan, infiniteModeEnabled ? "∞" : questions.length);
+  const selectedTheme = themeSelect ? themeSelect.value : "all";
+  currentQuestions =
+    selectedTheme === "all"
+      ? [...allQuestions]
+      : allQuestions.filter((question) => question.theme === selectedTheme);
+
+  if (!currentQuestions.length) {
+    setText(totalQuestionsSpan, 0);
+    setText(questionText, "Aucune question disponible pour ce thème.");
+    answersDiv.innerHTML = "";
+    nextBtn.classList.add("hidden");
+    setText(timeLeftSpan, "-");
+    return;
+  }
+
+  setText(totalQuestionsSpan, infiniteModeEnabled ? "∞" : currentQuestions.length);
+
+  currentQuestions.sort(() => Math.random() - 0.5);
 
   showQuestion();
 }
@@ -81,7 +123,7 @@ function startQuiz() {
 function showQuestion() {
   clearInterval(timerId);
 
-  const q = questions[currentQuestionIndex];
+  const q = currentQuestions[currentQuestionIndex];
   setText(questionText, q.text);
   totalQuestionsAsked += 1;
   setText(currentQuestionIndexSpan, totalQuestionsAsked);
@@ -108,7 +150,7 @@ function showQuestion() {
 function selectAnswer(index, btn) {
   clearInterval(timerId);
 
-  const q = questions[currentQuestionIndex];
+  const q = currentQuestions[currentQuestionIndex];
   if (index === q.correct) {
     score++;
     btn.classList.add("correct");
@@ -128,13 +170,14 @@ function selectAnswer(index, btn) {
 
 function nextQuestion() {
   currentQuestionIndex++;
-  if (currentQuestionIndex < questions.length) {
+  if (currentQuestionIndex < currentQuestions.length) {
     showQuestion();
     return;
   }
 
   if (infiniteModeEnabled) {
     currentQuestionIndex = 0;
+    currentQuestions.sort(() => Math.random() - 0.5);
     showQuestion();
     return;
   }
@@ -146,7 +189,7 @@ function endQuiz() {
   hideElement(questionScreen);
   showElement(resultScreen);
 
-  updateScoreDisplay(scoreText, score, questions.length);
+  updateScoreDisplay(scoreText, score, currentQuestions.length);
 
   if (score > bestScore) {
     bestScore = score;
