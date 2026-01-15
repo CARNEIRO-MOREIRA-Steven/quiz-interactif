@@ -26,6 +26,7 @@ let score = 0;
 let bestScore = loadFromLocalStorage("bestScore", 0);
 let timerId = null;
 let infiniteModeEnabled = false;
+let flashcardModeEnabled = false;
 let totalQuestionsAsked = 0;
 let currentQuestions = [];
 
@@ -37,6 +38,7 @@ const resultScreen = getElement("#result-screen");
 const bestScoreValue = getElement("#best-score-value");
 const bestScoreEnd = getElement("#best-score-end");
 const infiniteModeToggle = getElement("#infinite-mode-toggle");
+const flashcardModeToggle = getElement("#flashcard-mode-toggle")
 const themeSelect = getElement("#theme-select");
 const hintBtn = getElement("#hint-btn");
 const hintText = getElement("#hint-text");
@@ -49,6 +51,7 @@ const restartBtn = getElement("#restart-btn");
 
 const scoreText = getElement("#score-text");
 const timeLeftSpan = getElement("#time-left");
+const timerDiv = getElement('#timer-div')
 
 const currentQuestionIndexSpan = getElement("#current-question-index");
 const totalQuestionsSpan = getElement("#total-questions");
@@ -104,6 +107,7 @@ function startQuiz() {
   totalQuestionsAsked = 0;
 
   infiniteModeEnabled = Boolean(infiniteModeToggle && infiniteModeToggle.checked);
+  flashcardModeEnabled = Boolean(flashcardModeToggle && flashcardModeToggle.checked);
 
   const selectedTheme = themeSelect ? themeSelect.value : "all";
   currentQuestions =
@@ -127,7 +131,7 @@ function startQuiz() {
     return;
   }
 
-  setText(totalQuestionsSpan, infiniteModeEnabled ? "∞" : currentQuestions.length);
+setText(totalQuestionsSpan,flashcardModeEnabled || infiniteModeEnabled? "∞": currentQuestions.length);
 
   currentQuestions.sort(() => Math.random() - 0.5);
 
@@ -163,15 +167,20 @@ function showQuestion() {
 
   nextBtn.classList.add("hidden");
 
-  timeLeftSpan.textContent = q.timeLimit;
-  timerId = startTimer(
-    q.timeLimit,
-    (timeLeft) => setText(timeLeftSpan, timeLeft),
-    () => {
-      lockAnswers(answersDiv);
-      nextBtn.classList.remove("hidden");
-    }
-  );
+  if (flashcardModeEnabled) {
+    setText(timeLeftSpan, "∞");
+    timerDiv.classList.add('no-timer')
+  } else {
+    setText(timeLeftSpan, q.timeLimit);
+    timerId = startTimer(
+      q.timeLimit,
+      (timeLeft) => setText(timeLeftSpan, timeLeft),
+      () => {
+        lockAnswers(answersDiv);
+        nextBtn.classList.remove("hidden");
+      }
+    );
+  }
 }
 
 function selectAnswer(index, btn) {
@@ -197,6 +206,16 @@ function selectAnswer(index, btn) {
 
 function nextQuestion() {
   currentQuestionIndex++;
+
+  if (flashcardModeEnabled) {
+    if (currentQuestionIndex >= currentQuestions.length) {
+      currentQuestionIndex = 0;
+      currentQuestions.sort(() => Math.random() - 0.5);
+    }
+    showQuestion();
+    return;
+  }
+
   if (currentQuestionIndex < currentQuestions.length) {
     showQuestion();
     return;

@@ -161,6 +161,10 @@ button:hover {
   border-radius: 15px;
 }
 
+.no-timer {
+  display: none;
+}
+
 
 /* npx sass --watch style.scss:assets/css/style.css */
 
