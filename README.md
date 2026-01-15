@@ -12,6 +12,7 @@ Un quiz interactif en HTML/CSS/JS permettant :
 2. Feedback visuel (vert/rouge).
 3. Indicateur de progression.
 4. Meilleur score stocké localement.
+5. Quiz infini
 
 ## Installation
 
