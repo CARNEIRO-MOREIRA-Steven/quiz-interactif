@@ -365,6 +365,7 @@ let currentQuestionIndex = 0;
 let score = 0;
 let bestScore = loadFromLocalStorage("bestScore", 0);
 let timerId = null;
+let userAnswers = [];
 
 // DOM Elements
 const introScreen = getElement("#intro-screen");
@@ -382,6 +383,7 @@ const restartBtn = getElement("#restart-btn");
 
 const scoreText = getElement("#score-text");
 const timeLeftSpan = getElement("#time-left");
+const recapList = getElement("#recap-list");
 
 const currentQuestionIndexSpan = getElement("#current-question-index");
 const totalQuestionsSpan = getElement("#total-questions");
@@ -399,6 +401,8 @@ function startQuiz() {
 
   currentQuestionIndex = 0;
   score = 0;
+  userAnswers = [];
+  recapList.innerHTML = "";
 
   setText(totalQuestionsSpan, questions.length);
 
@@ -425,6 +429,9 @@ function showQuestion() {
     q.timeLimit,
     (timeLeft) => setText(timeLeftSpan, timeLeft),
     () => {
+      if (typeof userAnswers[currentQuestionIndex] === "undefined") {
+        userAnswers[currentQuestionIndex] = null;
+      }
       lockAnswers(answersDiv);
       nextBtn.classList.remove("hidden");
     }
@@ -432,9 +439,13 @@ function showQuestion() {
 }
 
 function selectAnswer(index, btn) {
+  if (typeof userAnswers[currentQuestionIndex] !== "undefined") {
+    return;
+  }
   clearInterval(timerId);
 
   const q = questions[currentQuestionIndex];
+  userAnswers[currentQuestionIndex] = index;
   if (index === q.correct) {
     score++;
     btn.classList.add("correct");
@@ -461,12 +472,38 @@ function endQuiz() {
   showElement(resultScreen);
 
   updateScoreDisplay(scoreText, score, questions.length);
+  renderRecap();
 
   if (score > bestScore) {
     bestScore = score;
     saveToLocalStorage("bestScore", bestScore);
   }
   setText(bestScoreEnd, bestScore);
+}
+
+function renderRecap() {
+  recapList.innerHTML = "";
+  questions.forEach((question, index) => {
+    const item = document.createElement("div");
+    item.classList.add("recap-item");
+
+    const userAnswerIndex = userAnswers[index];
+    const userAnswerText =
+      userAnswerIndex === null || typeof userAnswerIndex === "undefined"
+        ? "Pas de réponse"
+        : question.answers[userAnswerIndex];
+    const correctAnswerText = question.answers[question.correct];
+    const isCorrect = userAnswerIndex === question.correct;
+    const answerClass = isCorrect ? "correct" : "wrong";
+
+    item.innerHTML = `
+      <p><strong>Q${index + 1}.</strong> ${question.text}</p>
+      <p>Votre réponse : <span class="recap-answer ${answerClass}">${userAnswerText}</span></p>
+      <p>Bonne réponse : <span class="recap-answer correct">${correctAnswerText}</span></p>
+    `;
+
+    recapList.appendChild(item);
+  });
 }
 
 function restartQuiz() {
