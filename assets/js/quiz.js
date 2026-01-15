@@ -38,6 +38,8 @@ const bestScoreValue = getElement("#best-score-value");
 const bestScoreEnd = getElement("#best-score-end");
 const infiniteModeToggle = getElement("#infinite-mode-toggle");
 const themeSelect = getElement("#theme-select");
+const hintBtn = getElement("#hint-btn");
+const hintText = getElement("#hint-text");
 
 const questionText = getElement("#question-text");
 const answersDiv = getElement("#answers");
@@ -55,6 +57,11 @@ const totalQuestionsSpan = getElement("#total-questions");
 startBtn.addEventListener("click", startQuiz);
 nextBtn.addEventListener("click", nextQuestion);
 restartBtn.addEventListener("click", restartQuiz);
+if (hintBtn) {
+  hintBtn.addEventListener("click", () => {
+    revealHint();
+  });
+}
 
 const refreshBestScoreDisplays = () => {
   setText(bestScoreValue, bestScore);
@@ -110,6 +117,13 @@ function startQuiz() {
     answersDiv.innerHTML = "";
     nextBtn.classList.add("hidden");
     setText(timeLeftSpan, "-");
+    if (hintBtn) {
+      hintBtn.classList.add("hidden");
+    }
+    if (hintText) {
+      hintText.classList.add("hidden");
+      setText(hintText, "");
+    }
     return;
   }
 
@@ -127,6 +141,19 @@ function showQuestion() {
   setText(questionText, q.text);
   totalQuestionsAsked += 1;
   setText(currentQuestionIndexSpan, totalQuestionsAsked);
+
+  if (hintBtn) {
+    if (q.hint) {
+      hintBtn.classList.remove("hidden");
+      hintBtn.disabled = false;
+    } else {
+      hintBtn.classList.add("hidden");
+    }
+  }
+  if (hintText) {
+    hintText.classList.add("hidden");
+    setText(hintText, q.hint ? q.hint : "");
+  }
 
   answersDiv.innerHTML = "";
   q.answers.forEach((answer, index) => {
@@ -203,4 +230,13 @@ function restartQuiz() {
   showElement(introScreen);
 
   refreshBestScoreDisplays();
+}
+
+function revealHint() {
+  if (!hintBtn || !hintText) {
+    return;
+  }
+  hintBtn.disabled = true;
+  hintBtn.classList.add("hidden");
+  hintText.classList.remove("hidden");
 }
