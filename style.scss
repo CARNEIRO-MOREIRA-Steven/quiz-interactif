@@ -127,5 +127,21 @@ button:hover {
   background-color: #e1e1e1;
   border-radius: 25px 25px  0 0;
 }
+.quizz-mode{
+  display: flex;
+  gap: 25px;
+}
+.mode-theme, .infini-mode{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border: solid 2px #e1e1e1;
+  background-color: #e1e1e1;
+  padding: 10px;
+  border-radius: 15px;
+}
 
 /*# sourceMappingURL=style.css.map */
+/* npx sass --watch style.scss:assets/css/style.css */
