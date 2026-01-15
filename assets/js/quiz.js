@@ -28,6 +28,7 @@ let timerId = null;
 let infiniteModeEnabled = false;
 let totalQuestionsAsked = 0;
 let currentQuestions = [];
+let isDarkMode = false;
 
 // DOM Elements
 const introScreen = getElement("#intro-screen");
@@ -46,12 +47,15 @@ const answersDiv = getElement("#answers");
 const nextBtn = getElement("#next-btn");
 const startBtn = getElement("#start-btn");
 const restartBtn = getElement("#restart-btn");
+const themeToggleBtn = getElement("#theme-toggle");
 
 const scoreText = getElement("#score-text");
 const timeLeftSpan = getElement("#time-left");
 
 const currentQuestionIndexSpan = getElement("#current-question-index");
 const totalQuestionsSpan = getElement("#total-questions");
+
+const THEME_STORAGE_KEY = "quizTheme";
 
 // Init
 startBtn.addEventListener("click", startQuiz);
@@ -62,6 +66,9 @@ if (hintBtn) {
     revealHint();
   });
 }
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener("click", toggleTheme);
+}
 
 const refreshBestScoreDisplays = () => {
   setText(bestScoreValue, bestScore);
@@ -69,6 +76,7 @@ const refreshBestScoreDisplays = () => {
 };
 
 refreshBestScoreDisplays();
+initializeTheme();
 
 const populateThemeOptions = () => {
   if (!themeSelect) {
@@ -239,4 +247,23 @@ function revealHint() {
   hintBtn.disabled = true;
   hintBtn.classList.add("hidden");
   hintText.classList.remove("hidden");
+}
+
+function initializeTheme() {
+  const storedTheme = loadFromLocalStorage(THEME_STORAGE_KEY, "light");
+  applyTheme(storedTheme === "dark" ? "dark" : "light");
+}
+
+function toggleTheme() {
+  const nextTheme = isDarkMode ? "light" : "dark";
+  applyTheme(nextTheme);
+  saveToLocalStorage(THEME_STORAGE_KEY, nextTheme);
+}
+
+function applyTheme(theme) {
+  isDarkMode = theme === "dark";
+  document.body.classList.toggle("dark-mode", isDarkMode);
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = isDarkMode ? "Mode clair" : "Mode sombre";
+  }
 }
