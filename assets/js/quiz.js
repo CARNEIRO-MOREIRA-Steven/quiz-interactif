@@ -57,6 +57,8 @@ function startQuiz() {
   hideElement(introScreen);
   showElement(questionScreen);
 
+  questions.sort(() => Math.random() - 0.5);
+  
   currentQuestionIndex = 0;
   score = 0;
 
