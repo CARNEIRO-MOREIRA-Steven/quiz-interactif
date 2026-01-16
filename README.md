@@ -12,6 +12,10 @@ Un quiz interactif en HTML/CSS/JS permettant :
 2. Feedback visuel (vert/rouge).
 3. Indicateur de progression.
 4. Meilleur score stocké localement.
+<<<<<<< HEAD
+=======
+5. Quiz infini
+>>>>>>> release/1.0.0
 
 ## Installation
 
@@ -43,3 +47,10 @@ Un quiz interactif en HTML/CSS/JS permettant :
 ## Auteurs
 
 Ce projet sert d’exemple pédagogique pour comprendre la structure d’une application web simple, sa documentation et son organisation agile (backlog, user stories) et Gitflow.
+
+## Version
+
+- Version : 1.0.0
+- Date : 16/01/2026
+- Équipe : Groupe 2
+
