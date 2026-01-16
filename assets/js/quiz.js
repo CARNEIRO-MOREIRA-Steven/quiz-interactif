@@ -32,6 +32,9 @@ let timeAttackTimerId = null;
 let totalQuestionsAsked = 0;
 let currentQuestions = [];
 let isDarkMode = false;
+let answerHistory = [];
+let currentAnswerRecord = null;
+let questionAnswered = false;
 
 // DOM Elements
 const introScreen = getElement("#intro-screen");
@@ -60,6 +63,8 @@ const timeLeftSpan = getElement("#time-left");
 const timerDiv = getElement('#timer-div')
 const timeAttackDiv = getElement("#time-attack-div");
 const timeAttackLeftSpan = getElement("#time-attack-left");
+const recapContainer = getElement("#recap-container");
+const recapList = getElement("#recap-list");
 
 const currentQuestionIndexSpan = getElement("#current-question-index");
 const totalQuestionsSpan = getElement("#total-questions");
@@ -119,6 +124,16 @@ function startQuiz() {
   currentQuestionIndex = 0;
   score = 0;
   totalQuestionsAsked = 0;
+  answerHistory = [];
+  currentAnswerRecord = null;
+  questionAnswered = false;
+
+  if (recapList) {
+    recapList.innerHTML = "";
+  }
+  if (recapContainer) {
+    recapContainer.classList.add("hidden");
+  }
 
   infiniteModeEnabled = Boolean(infiniteModeToggle && infiniteModeToggle.checked);
   flashcardModeEnabled = Boolean(flashcardModeToggle && flashcardModeToggle.checked);
@@ -150,7 +165,8 @@ function startQuiz() {
     return;
   }
 
-setText(totalQuestionsSpan,flashcardModeEnabled || infiniteModeEnabled || timeAttackEnabled ? "∞": currentQuestions.length);
+
+  setText(totalQuestionsSpan, flashcardModeEnabled || infiniteModeEnabled ? "∞" : currentQuestions.length);
 
   currentQuestions.sort(() => Math.random() - 0.5);
 
@@ -187,6 +203,14 @@ function showQuestion() {
   clearInterval(timerId);
 
   const q = currentQuestions[currentQuestionIndex];
+  currentAnswerRecord = {
+    questionText: q.text,
+    answers: q.answers.slice(),
+    correctIndex: q.correct,
+    selectedIndex: null,
+    isCorrect: false,
+  };
+  questionAnswered = false;
   setText(questionText, q.text);
   totalQuestionsAsked += 1;
   setText(currentQuestionIndexSpan, totalQuestionsAsked);
@@ -233,10 +257,40 @@ function showQuestion() {
   }
 }
 
+function storeCurrentAnswerRecord() {
+  if (!currentAnswerRecord) {
+    return;
+  }
+  answerHistory.push({
+    questionText: currentAnswerRecord.questionText,
+    answers: [...currentAnswerRecord.answers],
+    correctIndex: currentAnswerRecord.correctIndex,
+    selectedIndex: currentAnswerRecord.selectedIndex,
+    isCorrect: Boolean(currentAnswerRecord.isCorrect),
+  });
+  questionAnswered = true;
+  currentAnswerRecord = null;
+}
+
+function finalizePendingAnswer() {
+  if (!currentAnswerRecord || questionAnswered) {
+    return;
+  }
+  currentAnswerRecord.isCorrect =
+    currentAnswerRecord.selectedIndex !== null &&
+    currentAnswerRecord.selectedIndex === currentAnswerRecord.correctIndex;
+  storeCurrentAnswerRecord();
+}
+
 function selectAnswer(index, btn) {
   clearInterval(timerId);
 
   const q = currentQuestions[currentQuestionIndex];
+  if (currentAnswerRecord && !questionAnswered) {
+    currentAnswerRecord.selectedIndex = index;
+    currentAnswerRecord.isCorrect = index === q.correct;
+    storeCurrentAnswerRecord();
+  }
   if (index === q.correct) {
     score++;
     btn.classList.add("correct");
@@ -255,6 +309,7 @@ function selectAnswer(index, btn) {
 }
 
 function nextQuestion() {
+  finalizePendingAnswer();
   currentQuestionIndex++;
 
   if (flashcardModeEnabled) {
@@ -307,6 +362,7 @@ function endQuiz() {
     saveToLocalStorage("bestScore", bestScore);
   }
   setText(bestScoreEnd, bestScore);
+  renderRecap();
 }
 
 function restartQuiz() {
@@ -342,4 +398,63 @@ function applyTheme(theme) {
   if (themeToggleBtn) {
     themeToggleBtn.textContent = isDarkMode ? "Mode clair" : "Mode sombre";
   }
+}
+
+function renderRecap() {
+  if (!recapContainer || !recapList) {
+    return;
+  }
+
+  recapList.innerHTML = "";
+
+  if (!answerHistory.length) {
+    recapContainer.classList.add("hidden");
+    return;
+  }
+
+  recapContainer.classList.remove("hidden");
+
+  answerHistory.forEach((entry, index) => {
+    const li = document.createElement("li");
+    li.classList.add("recap-item");
+
+    if (entry.selectedIndex === null) {
+      li.classList.add("recap-item--skipped");
+    } else if (entry.isCorrect) {
+      li.classList.add("recap-item--correct");
+    } else {
+      li.classList.add("recap-item--wrong");
+    }
+
+    const playerAnswer =
+      entry.selectedIndex !== null ? entry.answers[entry.selectedIndex] : "Pas de réponse";
+    const correctAnswer = entry.answers[entry.correctIndex];
+
+    const questionLine = document.createElement("p");
+    questionLine.classList.add("recap-question");
+    questionLine.textContent = `${index + 1}. ${entry.questionText}`;
+
+    const playerLine = document.createElement("p");
+    playerLine.classList.add("recap-answer");
+    if (entry.selectedIndex === null) {
+      playerLine.classList.add("recap-answer--skipped");
+    }
+
+    const playerLabel = document.createElement("span");
+    playerLabel.classList.add("recap-label");
+    playerLabel.textContent = "Votre réponse :";
+    playerLine.append(playerLabel, ` ${playerAnswer}`);
+
+    const correctLine = document.createElement("p");
+    correctLine.classList.add("recap-answer", "recap-answer--correct");
+    const correctLabel = document.createElement("span");
+    correctLabel.classList.add("recap-label");
+    correctLabel.textContent = "Bonne réponse :";
+    correctLine.append(correctLabel, ` ${correctAnswer}`);
+
+    li.appendChild(questionLine);
+    li.appendChild(playerLine);
+    li.appendChild(correctLine);
+    recapList.appendChild(li);
+  });
 }
