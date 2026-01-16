@@ -27,6 +27,8 @@ let bestScore = loadFromLocalStorage("bestScore", 0);
 let timerId = null;
 let infiniteModeEnabled = false;
 let flashcardModeEnabled = false;
+let timeAttackEnabled = false;
+let timeAttackTimerId = null;
 let totalQuestionsAsked = 0;
 let currentQuestions = [];
 let isDarkMode = false;
@@ -40,6 +42,8 @@ const bestScoreValue = getElement("#best-score-value");
 const bestScoreEnd = getElement("#best-score-end");
 const infiniteModeToggle = getElement("#infinite-mode-toggle");
 const flashcardModeToggle = getElement("#flashcard-mode-toggle")
+const timeAttackToggle = getElement("#time-attack-toggle");
+const timeAttackDurationSelect = getElement("#time-attack-duration");
 const themeSelect = getElement("#theme-select");
 const hintBtn = getElement("#hint-btn");
 const hintText = getElement("#hint-text");
@@ -54,6 +58,8 @@ const themeToggleBtn = getElement("#theme-toggle");
 const scoreText = getElement("#score-text");
 const timeLeftSpan = getElement("#time-left");
 const timerDiv = getElement('#timer-div')
+const timeAttackDiv = getElement("#time-attack-div");
+const timeAttackLeftSpan = getElement("#time-attack-left");
 
 const currentQuestionIndexSpan = getElement("#current-question-index");
 const totalQuestionsSpan = getElement("#total-questions");
@@ -116,6 +122,7 @@ function startQuiz() {
 
   infiniteModeEnabled = Boolean(infiniteModeToggle && infiniteModeToggle.checked);
   flashcardModeEnabled = Boolean(flashcardModeToggle && flashcardModeToggle.checked);
+  timeAttackEnabled = Boolean(timeAttackToggle && timeAttackToggle.checked);
 
   const selectedTheme = themeSelect ? themeSelect.value : "all";
   currentQuestions =
@@ -136,12 +143,42 @@ function startQuiz() {
       hintText.classList.add("hidden");
       setText(hintText, "");
     }
+    clearInterval(timeAttackTimerId);
+    if (timeAttackDiv) {
+      timeAttackDiv.classList.add("hidden");
+    }
     return;
   }
 
-setText(totalQuestionsSpan,flashcardModeEnabled || infiniteModeEnabled? "∞": currentQuestions.length);
+setText(totalQuestionsSpan,flashcardModeEnabled || infiniteModeEnabled || timeAttackEnabled ? "∞": currentQuestions.length);
 
   currentQuestions.sort(() => Math.random() - 0.5);
+
+  clearInterval(timeAttackTimerId);
+  if (timeAttackEnabled) {
+    const timeAttackDuration = timeAttackDurationSelect ? Number(timeAttackDurationSelect.value) : 0;
+    if (timeAttackDiv) {
+      timeAttackDiv.classList.remove("hidden");
+    }
+    if (timeAttackLeftSpan) {
+      setText(timeAttackLeftSpan, timeAttackDuration);
+    }
+    timeAttackTimerId = startTimer(
+      timeAttackDuration,
+      (timeLeft) => {
+        if (timeAttackLeftSpan) {
+          setText(timeAttackLeftSpan, timeLeft);
+        }
+      },
+      () => {
+        endQuiz();
+      }
+    );
+  } else {
+    if (timeAttackDiv) {
+      timeAttackDiv.classList.add("hidden");
+    }
+  }
 
   showQuestion();
 }
@@ -175,10 +212,15 @@ function showQuestion() {
 
   nextBtn.classList.add("hidden");
 
-  if (flashcardModeEnabled) {
-    setText(timeLeftSpan, "∞");
+  if (timeAttackDiv) {
+    timeAttackDiv.classList.toggle("hidden", !timeAttackEnabled);
+  }
+
+  if (flashcardModeEnabled || timeAttackEnabled) {
+    setText(timeLeftSpan, flashcardModeEnabled ? "∞" : "-");
     timerDiv.classList.add('no-timer')
   } else {
+    timerDiv.classList.remove('no-timer')
     setText(timeLeftSpan, q.timeLimit);
     timerId = startTimer(
       q.timeLimit,
@@ -224,6 +266,15 @@ function nextQuestion() {
     return;
   }
 
+  if (timeAttackEnabled) {
+    if (currentQuestionIndex >= currentQuestions.length) {
+      currentQuestionIndex = 0;
+      currentQuestions.sort(() => Math.random() - 0.5);
+    }
+    showQuestion();
+    return;
+  }
+
   if (currentQuestionIndex < currentQuestions.length) {
     showQuestion();
     return;
@@ -240,10 +291,16 @@ function nextQuestion() {
 }
 
 function endQuiz() {
+  clearInterval(timerId);
+  clearInterval(timeAttackTimerId);
   hideElement(questionScreen);
   showElement(resultScreen);
 
-  updateScoreDisplay(scoreText, score, currentQuestions.length);
+  updateScoreDisplay(
+    scoreText,
+    score,
+    flashcardModeEnabled || infiniteModeEnabled || timeAttackEnabled ? totalQuestionsAsked : currentQuestions.length
+  );
 
   if (score > bestScore) {
     bestScore = score;

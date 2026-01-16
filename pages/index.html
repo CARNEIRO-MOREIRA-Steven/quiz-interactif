@@ -30,6 +30,16 @@
         <label for="flashcard-mode-toggle">Mode flashcard</label>
         <input type="checkbox" id="flashcard-mode-toggle" />
       </div>
+      <div class="time-attack-mode">
+        <label for="time-attack-toggle">Mode contre la montre</label>
+        <input type="checkbox" id="time-attack-toggle" />
+        <label for="time-attack-duration">Durée</label>
+        <select id="time-attack-duration">
+          <option value="120">2 min</option>
+          <option value="300" selected>5 min</option>
+          <option value="600">10 min</option>
+        </select>
+      </div>
     </div>
     <button id="start-btn">Commencer le quiz</button>
   </div>
@@ -45,6 +55,7 @@
     <p id="hint-text" class="hint hidden"></p>
     <button id="next-btn" class="hidden">Question suivante</button>
     <div id="timer-div">Temps restant : <span id="time-left">0</span>s</div>
+    <div id="time-attack-div" class="hidden">Temps total restant : <span id="time-attack-left">0</span>s</div>
   </div>
 
   <div id="result-screen" style="display: none">
